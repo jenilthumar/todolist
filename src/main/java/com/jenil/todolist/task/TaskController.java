@@ -4,10 +4,9 @@ import com.jenil.todolist.repository.TaskRepository;
 import com.jenil.todolist.repository.UserRepository;
 import com.jenil.todolist.user.User;
 import com.jenil.todolist.user.UserNotFoundException;
-import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.repository.Query;
+import org.springframework.hateoas.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +15,8 @@ import java.util.List;
 
 import static com.jenil.todolist.task.TaskStatus.*;
 import static org.springframework.data.domain.Sort.Direction.DESC;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 public class TaskController {
@@ -33,8 +34,17 @@ public class TaskController {
 
 
     @GetMapping("/users/{id}/tasks")
-    public List<Task> getAllTask(@PathVariable String id) {
-        return taskRepo.findAll();
+    public CollectionModel<Task> getAllTask(@PathVariable String id) {
+
+        List<Task> task= taskRepo.findAll();
+
+        Link link1 = linkTo(methodOn(TaskController.class).createTask(new Task(), id)).withRel("Create new task");
+        Link link2 = linkTo(methodOn(TaskController.class).getCompletedTask(id)).withRel("Get completed task");
+        Link link3 = linkTo(methodOn(TaskController.class).getPendingTask(id)).withRel("Get pending task");
+        Link link4 = linkTo(methodOn(TaskController.class).getInProgressTask(id)).withRel("Get inprogress task");
+
+       CollectionModel<Task> result = CollectionModel.of(task, link1, link2, link3, link4);
+       return result;
     }
 
     @PostMapping("/users/{id}/tasks")
